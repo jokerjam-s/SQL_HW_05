@@ -84,6 +84,8 @@ FROM train
 
 ### Доп. задачки (sem4_5.sql)
 
+**Доп. 1**
+
 Выбрать всех пользователей, указав их ```id```, ```имя``` и ```фамилию```, ```город``` и ```аватарку``` (используя вложенные запросы)
 
 ```sql
@@ -106,22 +108,64 @@ WHERE u.id = p.user_id
 
 ![](image/img_007.jpg)
 
+**Доп. 2**
+
 Список медиафайлов пользователей, указав название типа медиа ```(id, filename, name_type)``` (используя ```JOIN```)
 
 ```sql
-
+SELECT
+  u.id, u.firstname, u.lastname,
+  m.filename, mt.name_type
+FROM users u
+  LEFT JOIN media m ON u.id = m.user_id
+  LEFT JOIN media_types mt ON m.media_type_id = mt.id
 ```
 
+![](image/img_008.png)
 
 Найдите друзей у друзей пользователя с ```id = 1```. (решение задачи с помощью представления “друзья”)
 
-```sql
+представление "друзья"
 
+```sql
+CREATE VIEW friends AS
+ SELECT
+   u.id, CONCAT(u.firstname, ' ', u.lastname) AS user_name, fr.target_user_id
+ FROM users u
+   LEFT JOIN friend_requests fr ON u.id = fr.initiator_user_id;
 ```
 
+![](image/img_009.png)
+
+поиск друзей
+
+```sql
+SELECT f.target_user_id, u.id,
+  CONCAT(u.firstname, ' ', u.lastname) AS frend_name
+FROM friends f
+  LEFT JOIN friend_requests fr ON f.target_user_id = fr.initiator_user_id
+  LEFT JOIN users u ON fr.target_user_id = u.id
+WHERE f.id = 1
+```
+
+![](image/img_010.png)
+
+Как можно видеть из первой выборки у пользователя с **id=1** есть три друга с **id: 2,3,10**. Проверяя друзей для данных персон в той же первоначальной выборке друзей, находим, что у друг есть только у персоны с **id=10**, это *Victoria Medhurst*, идентификатор которой равен **6**. Полученная вторая выборка верна, найден только один друг у друзей. 
+
+**Доп. 3**
 
 Найдите друзей у друзей пользователя с ```id = 1``` и поместите выборку в представление;
 
 ```sql
-
+CREATE VIEW friends_of_friends AS 
+  SELECT f.user_name, f.target_user_id, u.id,
+    CONCAT(u.firstname, ' ', u.lastname) AS frend_name
+  FROM (SELECT
+      u.id, CONCAT(u.firstname, ' ', u.lastname) AS user_name, fr.target_user_id
+      FROM users u
+        LEFT JOIN friend_requests fr ON u.id = fr.initiator_user_id) f
+    LEFT JOIN friend_requests fr ON f.target_user_id = fr.initiator_user_id
+    LEFT JOIN users u ON fr.target_user_id = u.id;
 ```
+
+![](image/img_011.png)
